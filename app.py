@@ -176,16 +176,17 @@ with tab1:
         raw    = yf.download(list(sectors.keys()), start=start, end=end, auto_adjust=True, progress=False)
         prices = raw['Close'].dropna(how='all').ffill()
 
-  def pct(df, d):
-    if len(df) < d:
-        return pd.Series([None] * len(df.columns), index=df.columns)
-    return ((df.iloc[-1] - df.iloc[-d]) / df.iloc[-d] * 100).round(2)
+def pct(df, d):
+        if len(df) < d:
+            return pd.Series([None] * len(df.columns), index=df.columns)
+        return ((df.iloc[-1] - df.iloc[-d]) / df.iloc[-d] * 100).round(2)
 
-returns = pd.DataFrame({
-    '1W': pct(prices, min(5, len(prices))),
-    '1M': pct(prices, min(21, len(prices))),
-    '3M': pct(prices, min(63, len(prices)))
-})
+    returns = pd.DataFrame({
+        '1W': pct(prices, min(5, len(prices))),
+        '1M': pct(prices, min(21, len(prices))),
+        '3M': pct(prices, min(63, len(prices)))
+    })
+
     returns.index = [sectors[t] for t in returns.index]
     returns = returns.sort_values('1M', ascending=False)
 
