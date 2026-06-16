@@ -7,6 +7,16 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 from datetime import datetime, timedelta
 import warnings
+import time
+
+# Auto-refresh every 5 minutes
+st_autorefresh = st.empty()
+if 'last_refresh' not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+if time.time() - st.session_state.last_refresh > 300:  # 300 seconds = 5 min
+    st.session_state.last_refresh = time.time()
+    st.rerun()
 warnings.filterwarnings('ignore')
 
 # ── PAGE CONFIG ──────────────────────────────────────────────
@@ -166,14 +176,16 @@ with tab1:
         raw    = yf.download(list(sectors.keys()), start=start, end=end, auto_adjust=True, progress=False)
         prices = raw['Close'].dropna(how='all').ffill()
 
-    def pct(df, d):
-        return ((df.iloc[-1] - df.iloc[-d]) / df.iloc[-d] * 100).round(2)
+  def pct(df, d):
+    if len(df) < d:
+        return pd.Series([None] * len(df.columns), index=df.columns)
+    return ((df.iloc[-1] - df.iloc[-d]) / df.iloc[-d] * 100).round(2)
 
-    returns = pd.DataFrame({
-        '1W': pct(prices, 5),
-        '1M': pct(prices, 21),
-        '3M': pct(prices, 63)
-    })
+returns = pd.DataFrame({
+    '1W': pct(prices, min(5, len(prices))),
+    '1M': pct(prices, min(21, len(prices))),
+    '3M': pct(prices, min(63, len(prices)))
+})
     returns.index = [sectors[t] for t in returns.index]
     returns = returns.sort_values('1M', ascending=False)
 
